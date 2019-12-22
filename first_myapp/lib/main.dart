@@ -18,6 +18,8 @@ class MyApp extends StatelessWidget {
         "boxA": (context) => TapBoxA(),
         "boxB": (context) => ParentWidget(),
         "boxC": (context) => ParentWidgetC(),
+        "list": (context) => CustomScrollViewTestRoute(),
+        "list_view": (context) => ScrollControllerTestRoute(),
       },
     );
   }
@@ -78,6 +80,14 @@ class _MyHomePageState extends State<MyHomePage> {
             RaisedButton(
               onPressed: () => {Navigator.pushNamed(context, "boxC")},
               child: Text("BoxC"),
+            ),
+            RaisedButton(
+              onPressed: () => {Navigator.pushNamed(context, "list")},
+              child: Text("List"),
+            ),
+            RaisedButton(
+              onPressed: () => {Navigator.pushNamed(context, "list_view")},
+              child: Text("ListView"),
             ),
           ],
           
@@ -325,6 +335,120 @@ class _TapBoxCState extends State<TapBoxC>{
           color: widget.active ? Colors.lightGreen[700] : Colors.grey[600],
           border: _highlight ? new Border.all(color: Colors.teal[700], width: 10.0,) : null,
         ),
+      ),
+    );
+  }
+}
+
+class CustomScrollViewTestRoute extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      slivers: <Widget>[
+        // AppBar，包含一个导航栏
+        SliverAppBar(
+          pinned: true,
+          expandedHeight: 250.0,
+          flexibleSpace: FlexibleSpaceBar(
+            title: const Text("Demo"),
+          ),
+        ),
+        SliverPadding(
+          padding: const EdgeInsets.all(8.0),
+          sliver: new SliverGrid(
+            gridDelegate: new SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 10.0,
+              crossAxisSpacing: 10.0,
+              childAspectRatio: 4.0,
+            ),
+            delegate: new SliverChildBuilderDelegate(
+              (BuildContext context, int index) {
+                return new Container(
+                  alignment: Alignment.center,
+                  color: Colors.cyan[100 * (index % 9)],
+                  child: new Text("Grid item $index"),
+                );
+              },
+              childCount: 20,
+            ),
+          ),
+        ),
+        new SliverFixedExtentList(
+          itemExtent: 50.0,
+          delegate: new SliverChildBuilderDelegate(
+            (BuildContext context, int index) {
+              return new Container(
+                alignment: Alignment.center,
+                color: Colors.lightBlue[100 * (index % 9)],
+                child: new Text("list item $index"),
+              );
+            },
+            childCount: 50
+          ),
+        )
+      ],
+    );
+  }
+}
+
+class ScrollControllerTestRoute extends StatefulWidget {
+  @override
+  _ScrollControllerTestRouteState createState() => new _ScrollControllerTestRouteState();
+}
+
+class _ScrollControllerTestRouteState extends State<ScrollControllerTestRoute> {
+  ScrollController _controller = new ScrollController();
+  bool showToTopBtn = false; // 是否显示返回顶部按钮
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(() {
+      print(_controller.offset); // 监听滚动条的位置
+      if (_controller.offset < 1000 && showToTopBtn) {
+        setState(() {
+          showToTopBtn = false;
+        });
+      } else if (_controller.offset >= 1000 && showToTopBtn == false) {
+        setState(() {
+          showToTopBtn = true;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("滚动控制")),
+      body: Scrollbar(
+        child: ListView.builder(
+          itemCount: 100,
+          itemExtent: 50.0,
+          controller: _controller,
+          itemBuilder: (context, index) {
+            return ListTile(title: Text("$index"),);
+          },
+        ),
+      ),
+      floatingActionButton: !showToTopBtn ? null : FloatingActionButton(
+        child: Icon(Icons.arrow_upward),
+        onPressed: () {
+          // 返回顶部的执行动画
+            _controller.animateTo(.0,
+            duration: Duration(milliseconds: 200),
+            curve: Curves.ease
+          );
+        },
       ),
     );
   }
